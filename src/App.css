@@ -1,0 +1,47 @@
+.btn-nueva-consulta {
+  background-color: #315195;
+  color: #ffffff;
+  font-weight: 600;
+  border: none;
+  border-radius: 0;
+  padding: 6px 24px;
+}
+
+.btn-nueva-consulta:hover {
+  background-color: #243d73;
+  color: #ffffff;
+}
+
+.custom-input {
+  border: 1.5px solid #000000 !important;
+  border-radius: 0 !important;
+  font-size: 0.9rem;
+  color: #333333;
+}
+
+.custom-input::placeholder {
+  color: #a0a0a0;
+}
+
+.bg-resultado-header {
+  background-color: #ff0000;
+  color: #ffffff;
+  font-weight: 700;
+  text-align: center;
+  padding: 8px 0;
+  font-size: 1.1rem;
+}
+
+.cuota-box {
+  border: 1.5px solid #000000;
+  background-color: #ffffff;
+  padding: 6px 12px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 0;
+}
+
+.cuota-box div {
+  line-height: 1.3;
+}
