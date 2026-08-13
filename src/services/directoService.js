@@ -1,6 +1,6 @@
-const BASE_URL = import.meta.env.VITE_DIRECTO_URL || "/api-directo";
-const USERNAME = import.meta.env.VITE_DIRECTO_USER || "ASPENMULTICONSULTA";
-const PASSWORD = import.meta.env.VITE_DIRECTO_PASS || "DIRECTO10858";
+const BASE_URL = import.meta.env.VITE_DIRECTO_URL;
+const USERNAME = import.meta.env.VITE_DIRECTO_USER;
+const PASSWORD = import.meta.env.VITE_DIRECTO_PASS;
 
 let tokenCache = null;
 
@@ -49,7 +49,7 @@ export const obtenerDatosPersonaDirecto = async (dni, genero = "1") => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      },
+      }
     );
 
     if (!res.ok) return null;
@@ -118,7 +118,7 @@ export const cotizarDirecto = async ({
       ) {
         console.warn(
           "⚠️ [Directo Rechazado / Sin Oferta]:",
-          dataScoring.message,
+          dataScoring.message
         );
         console.groupEnd();
         return {
@@ -162,7 +162,7 @@ export const cotizarDirecto = async ({
       pendingRequestId: requestId,
       campana: campaignMsg,
       planes: (dataPlanes.deadlines || []).sort(
-        (a, b) => a.quantityRate - b.quantityRate,
+        (a, b) => a.quantityRate - b.quantityRate
       ),
     };
   } catch (error) {
