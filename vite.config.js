@@ -17,6 +17,12 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path.replace(/^\/api-directo/, ""),
       },
+      "/api-macro": {
+        target: "https://api.onscore.io",
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api-macro/, ""),
+      },
     },
   },
 });

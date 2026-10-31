@@ -3,6 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import { obtenerDatosPersona, cotizarCreditech } from './services/creditechService';
 import { obtenerDatosPersonaDirecto, cotizarDirecto } from './services/directoService';
+import { cotizarMacro } from './services/macroService';
 
 const POLITICAS_DIRECTO = [
   { id: '1', nombre: '1 - MOTO' },
@@ -25,27 +26,30 @@ const App = () => {
 
   const [montoCreditech, setMontoCreditech] = useState('');
   const [montoDirecto, setMontoDirecto] = useState('');
+  const [montoMacro, setMontoMacro] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [loadingCreditech, setLoadingCreditech] = useState(false);
   const [loadingDirecto, setLoadingDirecto] = useState(false);
+  const [loadingMacro, setLoadingMacro] = useState(false);
   const [buscandoPersona, setBuscandoPersona] = useState(false);
   const [consultaRealizada, setConsultaRealizada] = useState(false);
-  const [resultados, setResultados] = useState({ creditech: null, directo: null });
+  const [resultados, setResultados] = useState({ creditech: null, directo: null, macro: null });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setConsultaRealizada(false);
-    setResultados({ creditech: null, directo: null });
+    setResultados({ creditech: null, directo: null, macro: null });
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleDniChange = (e) => {
     const valorLimpio = e.target.value.replace(/\D/g, '');
     setConsultaRealizada(false);
-    setResultados({ creditech: null, directo: null });
+    setResultados({ creditech: null, directo: null, macro: null });
     setMontoCreditech('');
     setMontoDirecto('');
+    setMontoMacro('');
 
     setFormData((prev) => ({
       ...prev,
@@ -95,15 +99,17 @@ const App = () => {
 
     setLoading(true);
 
-    const [resCreditech, resDirecto] = await Promise.all([
+    const [resCreditech, resDirecto, resMacro] = await Promise.all([
       cotizarCreditech({ ...formData, montoFinanciar: '' }),
-      cotizarDirecto({ ...formData, montoFinanciar: '' })
+      cotizarDirecto({ ...formData, montoFinanciar: '' }),
+      cotizarMacro({ ...formData, montoFinanciar: '' })
     ]);
 
     if (resCreditech?.aprobado) setMontoCreditech(resCreditech.montoMaximo);
     if (resDirecto?.aprobado) setMontoDirecto(resDirecto.montoMaximo);
+    if (resMacro?.aprobado) setMontoMacro(resMacro.montoMaximo);
 
-    setResultados({ creditech: resCreditech, directo: resDirecto });
+    setResultados({ creditech: resCreditech, directo: resDirecto, macro: resMacro });
     setConsultaRealizada(true);
     setLoading(false);
   };
@@ -116,27 +122,35 @@ const App = () => {
     setLoadingCreditech(false);
   };
 
-const recalcularDirecto = async () => {
-  if (!montoDirecto) return;
-  setLoadingDirecto(true);
-  
-  const res = await cotizarDirecto({ 
-    ...formData, 
-    montoFinanciar: montoDirecto,
-    pendingRequestId: resultados.directo?.pendingRequestId
-  });
+  const recalcularDirecto = async () => {
+    if (!montoDirecto) return;
+    setLoadingDirecto(true);
+    
+    const res = await cotizarDirecto({ 
+      ...formData, 
+      montoFinanciar: montoDirecto,
+      pendingRequestId: resultados.directo?.pendingRequestId
+    });
 
-  setResultados((prev) => ({
-    ...prev,
-    directo: {
-      ...res,
-      montoMaximo: res.montoMaximo || prev.directo?.montoMaximo,
-      campana: res.campana || prev.directo?.campana,
-    }
-  }));
-  
-  setLoadingDirecto(false);
-};
+    setResultados((prev) => ({
+      ...prev,
+      directo: {
+        ...res,
+        montoMaximo: res.montoMaximo || prev.directo?.montoMaximo,
+        campana: res.campana || prev.directo?.campana,
+      }
+    }));
+    
+    setLoadingDirecto(false);
+  };
+
+  const recalcularMacro = async () => {
+    if (!montoMacro) return;
+    setLoadingMacro(true);
+    const res = await cotizarMacro({ ...formData, montoFinanciar: montoMacro });
+    setResultados((prev) => ({ ...prev, macro: res }));
+    setLoadingMacro(false);
+  };
 
   return (
     <div className="container my-4 fs-6">
@@ -208,7 +222,8 @@ const recalcularDirecto = async () => {
 
       {consultaRealizada && (
         <div className="row g-4 mt-2">
-          <div className="col-md-6">
+          {/* CREDITECH */}
+          <div className="col-md-4">
             <div className="card shadow-sm h-100 p-3">
               <h5 className="fw-bold text-center text-primary mb-3">CREDITECH</h5>
               {resultados.creditech?.aprobado ? (
@@ -217,7 +232,6 @@ const recalcularDirecto = async () => {
                     <span className="small text-muted d-block">Monto Máximo Aprobado</span>
                     <strong className="fs-5">${resultados.creditech.montoMaximo.toLocaleString()}</strong>
                   </div>
-
                   <div className="mb-3">
                     <label className="form-label small fw-bold">Monto a Cotizar:</label>
                     <div className="input-group input-group-sm">
@@ -229,20 +243,15 @@ const recalcularDirecto = async () => {
                         onChange={(e) => setMontoCreditech(e.target.value)}
                         placeholder="Ingrese monto"
                       />
-                      <button 
-                        className="btn btn-outline-primary fw-bold" 
-                        onClick={recalcularCreditech}
-                        disabled={loadingCreditech}
-                      >
+                      <button className="btn btn-outline-primary fw-bold" onClick={recalcularCreditech} disabled={loadingCreditech}>
                         {loadingCreditech ? '...' : 'Recalcular'}
                       </button>
                     </div>
                   </div>
-
                   <div className="row g-2">
                     {resultados.creditech.cuotas.map((c, i) => (
                       <div key={i} className="col-6">
-                        <div className="p-2 border rounded bg-light text-center">
+                        <div className="p-2 border rounded bg-light text-center small">
                           {c.CantidadCuotas} cuotas de <strong>${c.Monto?.toLocaleString()}</strong>
                         </div>
                       </div>
@@ -255,7 +264,8 @@ const recalcularDirecto = async () => {
             </div>
           </div>
 
-          <div className="col-md-6">
+          {/* CRÉDITO DIRECTO */}
+          <div className="col-md-4">
             <div className="card shadow-sm h-100 p-3">
               <h5 className="fw-bold text-center text-danger mb-3">CRÉDITO DIRECTO</h5>
               {resultados.directo?.aprobado ? (
@@ -264,13 +274,11 @@ const recalcularDirecto = async () => {
                     <span className="small text-muted d-block">Monto Máximo Aprobado</span>
                     <strong className="fs-5">${resultados.directo.montoMaximo.toLocaleString()}</strong>
                   </div>
-
                   {resultados.directo.campana && (
                     <div className="text-center mb-2">
                       <span className="badge bg-warning text-dark">{resultados.directo.campana}</span>
                     </div>
                   )}
-
                   <div className="mb-3">
                     <label className="form-label small fw-bold">Monto a Cotizar:</label>
                     <div className="input-group input-group-sm">
@@ -282,20 +290,15 @@ const recalcularDirecto = async () => {
                         onChange={(e) => setMontoDirecto(e.target.value)}
                         placeholder="Ingrese monto"
                       />
-                      <button 
-                        className="btn btn-outline-danger fw-bold" 
-                        onClick={recalcularDirecto}
-                        disabled={loadingDirecto}
-                      >
+                      <button className="btn btn-outline-danger fw-bold" onClick={recalcularDirecto} disabled={loadingDirecto}>
                         {loadingDirecto ? '...' : 'Recalcular'}
                       </button>
                     </div>
                   </div>
-
                   <div className="row g-2">
                     {resultados.directo.planes.map((p, i) => (
                       <div key={i} className="col-6">
-                        <div className="p-2 border rounded bg-light text-center">
+                        <div className="p-2 border rounded bg-light text-center small">
                           {p.quantityRate} cuotas de <strong>${p.amountRate?.toLocaleString()}</strong>
                         </div>
                       </div>
@@ -305,6 +308,50 @@ const recalcularDirecto = async () => {
               ) : (
                 <div className="text-center text-danger fw-bold py-4">
                   {resultados.directo?.mensaje || 'No Aprobado / Sin crédito'}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* BANCO MACRO */}
+          <div className="col-md-4">
+            <div className="card shadow-sm h-100 p-3">
+              <h5 className="fw-bold text-center text-success mb-3">BANCO MACRO</h5>
+              {resultados.macro?.aprobado ? (
+                <div>
+                  <div className="alert alert-success text-center py-2 mb-3">
+                    <span className="small text-muted d-block">Monto Máximo Aprobado</span>
+                    <strong className="fs-5">${resultados.macro.montoMaximo.toLocaleString()}</strong>
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label small fw-bold">Monto a Cotizar:</label>
+                    <div className="input-group input-group-sm">
+                      <span className="input-group-text">$</span>
+                      <input
+                        type="number"
+                        className="form-control fw-bold"
+                        value={montoMacro}
+                        onChange={(e) => setMontoMacro(e.target.value)}
+                        placeholder="Ingrese monto"
+                      />
+                      <button className="btn btn-outline-success fw-bold" onClick={recalcularMacro} disabled={loadingMacro}>
+                        {loadingMacro ? '...' : 'Recalcular'}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="row g-2">
+                    {resultados.macro.planes.map((p, i) => (
+                      <div key={i} className="col-6">
+                        <div className="p-2 border rounded bg-light text-center small">
+                          {p.quantityRate} cuotas de <strong>${p.amountRate?.toLocaleString()}</strong>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center text-danger fw-bold py-4">
+                  {resultados.macro?.mensaje || 'Sin oferta / No aprobado'}
                 </div>
               )}
             </div>

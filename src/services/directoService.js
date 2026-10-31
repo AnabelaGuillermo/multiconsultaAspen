@@ -94,7 +94,7 @@ export const cotizarDirecto = async ({
         dni: String(dni),
         sexTypeId: String(sexTypeId),
         policyProduct: String(politicaDirecto),
-        informedCommerceCode: "000",
+        informedCommerceCode: "1264",
       };
 
       console.log("1️⃣ [Directo Scoring] Enviando payload:", payloadScoring);
@@ -116,14 +116,23 @@ export const cotizarDirecto = async ({
         !dataScoring.offer ||
         dataScoring.offer.length === 0
       ) {
+        // 🛠️ AQUÍ REALIZAMOS EL CAMBIO DEL MENSAJE DE RECHAZO:
+        let mensajePersonalizado = dataScoring.message;
+        
+        if (mensajePersonalizado === "Rejected") {
+          mensajePersonalizado = "No Aprobado / Sin crédito";
+        } else if (mensajePersonalizado === "Invalid Person") {
+          mensajePersonalizado = "Datos de la persona inválidos o no encontrados.";
+        }
+
         console.warn(
           "⚠️ [Directo Rechazado / Sin Oferta]:",
-          dataScoring.message
+          mensajePersonalizado
         );
         console.groupEnd();
         return {
           aprobado: false,
-          mensaje: dataScoring.message || "Sin oferta disponible",
+          mensaje: mensajePersonalizado,
         };
       }
 

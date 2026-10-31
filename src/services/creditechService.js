@@ -42,6 +42,7 @@ export const cotizarCreditech = async ({
   persona,
   fechaNacimiento,
   telefono,
+  montoFinanciar,
 }) => {
   console.group("🚀 --- INICIANDO FLUJO DE COTIZACIÓN CREDITECH ---");
 
@@ -131,11 +132,13 @@ export const cotizarCreditech = async ({
       `🎉 [Calificación Exitosa] Monto Aprobado: $${dataCalif.MontoAprobado}`,
     );
 
+    const montoACotizar = montoFinanciar ? Number(montoFinanciar) : dataCalif.MontoAprobado;
+    
     const payloadCalculador = {
       LoginInterface: LOGIN_INTERFACE,
       IdSolicitudPendiente: dataCalif.IdSolicitudPendiente || 0,
       ImporteCuota: 0,
-      Monto: dataCalif.MontoAprobado,
+      Monto: montoACotizar,
       IdArticulo: dataCalif.Articulo
         ? dataCalif.Articulo[0]?.IdArticulo || 0
         : 0,
